@@ -1,4 +1,4 @@
-# 🌊 Deep Sea Relic Hunter (深海遗迹：回响)
+# 🌊 深海遗迹：回响
 
 <div align="center">
 
@@ -7,15 +7,29 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-3178c6?style=for-the-badge&logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-6.2.0-646cff?style=for-the-badge&logo=vite)
 
-一款神秘的深海主题三消瓦片消除游戏。在这个充满挑战的益智冒险中，从海底回收古老的遗迹。【该项目仅用于学习和娱乐】
+一款神秘的深海主题三消瓦片消除游戏。在这个充满挑战的益智冒险中，从海底回收古老的遗迹。
 
-[English](#english) | [中文](#中文)
+**【该项目仅用于学习和娱乐】**
+
+### 🎮 [在线演示](https://sea-le-sea.netlify.app/)
 
 </div>
 
 ---
 
-## 📖 中文
+## 📸 游戏截图
+
+<div align="center">
+
+### 主页面
+![主页面](sources/imgs/zhuye.jpg)
+
+### 游戏界面
+![游戏界面](sources/imgs/youxi.jpg)
+
+</div>
+
+---
 
 ### ✨ 游戏特色
 
@@ -58,14 +72,6 @@ cd deep-sea-relic-hunter
 npm install
 ```
 
-#### 配置
-
-创建 `.env` 文件并添加你的 Gemini API Key（可选，用于 AI 解说功能）：
-
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
 #### 运行
 
 ```bash
@@ -88,7 +94,8 @@ npm run preview
 - **构建工具**：Vite 6.2.0
 - **样式方案**：Tailwind CSS
 - **图标库**：Lucide React
-- **AI 集成**：Google Gemini AI (@google/genai)
+- **打字机特效**：自定义 TypewriterText 组件
+- **代码压缩**：Terser
 
 ### 📁 项目结构
 
@@ -99,9 +106,11 @@ deep-sea-relic-hunter/
 │   ├── GameBoard.tsx   # 游戏棋盘组件
 │   ├── GameHeader.tsx  # 游戏头部组件
 │   ├── GameOverModal.tsx # 游戏结束弹窗
-│   └── Tile.tsx        # 瓦片组件
+│   ├── HelpSidebar.tsx # 右侧帮助说明栏
+│   ├── Tile.tsx        # 瓦片组件
+│   └── TypewriterText.tsx # 打字机特效组件
 ├── services/           # 服务层
-│   └── geminiService.ts # Gemini AI 服务
+│   └── geminiService.ts # 环境话术服务（50条预设话术）
 ├── App.tsx             # 主应用组件
 ├── constants.tsx       # 游戏常量配置
 ├── types.ts            # TypeScript 类型定义
@@ -113,11 +122,16 @@ deep-sea-relic-hunter/
 
 ### 🎮 游戏机制详解
 
-#### 层级判定系统
+#### 层级判定系统（俯视视角）
 
-游戏使用严格的空间重叠检测：
-- 瓦片尺寸：宽 50px，高 60px
-- 判定规则：如果上方图层有任何瓦片与当前瓦片在空间上存在重叠（dx < 50 且 dy < 60），则当前瓦片被判定为"被压住"，不可点击
+游戏使用严格的俯视遮挡检测：
+- **核心思想**：从正上方往下看（俯视），只有视觉上完全可见的瓦片才能点击
+- **瓦片尺寸**：宽 50px，高 60px
+- **判定规则**：
+  - 从上往下看，如果一个瓦片被任何更高层的瓦片遮挡，就不能点击
+  - 遮挡判定：上层瓦片的投影与当前瓦片有重叠
+  - 同层瓦片不互相遮挡
+  - 只检查严格更高层（layer 值更大）的瓦片
 
 #### 特殊布局
 
@@ -125,14 +139,13 @@ deep-sea-relic-hunter/
 - **随机散落点**：10 个散落集群，每个集群 3 层
 - **左右侧边槽**：各 15 个瓦片的长条堆，只有最上层可点击
 
-### 🤖 AI 助手功能
+### 🤖 深蓝助手功能
 
-游戏集成了 Google Gemini AI，提供：
-- 游戏开始时的冷酷提醒
-- 失败时的幽默嘲讽
-- 卡住时的神秘提示
-
-AI 助手"深蓝"使用潜水术语和数据分析的语气，为游戏增添趣味性。
+游戏内置智能助手"深蓝"，提供：
+- **打字机特效**：逐字显示文本，停留 30 秒后自动删除并切换下一条
+- **50 条环境话术**：包含深海探测、数据分析、系统状态等主题
+- **幽默风格**：使用潜水术语和数据分析的语气，为游戏增添趣味性
+- **自动循环**：话术自动切换，营造沉浸式深海探测氛围
 
 ### 🎨 视觉设计
 
@@ -140,6 +153,8 @@ AI 助手"深蓝"使用潜水术语和数据分析的语气，为游戏增添趣
 - **扫描线动画**：模拟声呐扫描效果
 - **匹配闪光动画**：瓦片消除时的视觉反馈
 - **流畅过渡**：使用线性过渡避免跳跃感
+- **右侧帮助栏**：可展开/收起的功能说明，详细介绍重置、重排、探测三大功能
+- **打字机特效**：深蓝助手的文字逐字显示，增强沉浸感
 
 ### 📝 开发说明
 
@@ -173,176 +188,12 @@ AI 助手"深蓝"使用潜水术语和数据分析的语气，为游戏增添趣
 ### 🙏 致谢
 
 - 游戏灵感来源于"羊了个羊"
-- 使用 Google Gemini AI 提供智能解说
 - 图标由 Lucide React 提供
-
----
-
-## 📖 English
-
-### ✨ Features
-
-- 🎮 **Classic Match-3 Gameplay**: Click clickable tiles to move them to the bottom dock, three identical tiles will be automatically eliminated
-- 🌊 **Deep Sea Theme**: 14 different deep-sea relics including ancient amphoras, glowing pearls, golden compasses, etc.
-- 🤖 **AI Assistant**: Integrated with Google Gemini AI for humorous game commentary and hints
-- 🎯 **Dual Difficulty Modes**:
-  - **Level 1 (Tutorial)**: ~15 tiles, simple 3-layer stack
-  - **Level 2 (Hell Mode)**: ~180 tiles, complex "Sheep a Sheep" style layout
-- 🎨 **Beautiful UI**: Modern deep-sea style interface using Tailwind CSS and Lucide React icons
-- ⚡ **Smooth Animations**: Linear transition animations for a fluid gaming experience
-
-### 🎯 Game Rules
-
-1. **Objective**: Eliminate all tiles
-2. **Controls**: Click on clickable tiles (tiles not covered by upper layer tiles)
-3. **Elimination**: Bottom dock holds up to 7 tiles, three identical tiles will be automatically eliminated
-4. **Failure**: Game fails when the dock is full and no elimination is possible
-5. **Special Layouts**:
-   - Left/Right side piles: Only the topmost tile is clickable
-   - Central tower: Strict layer detection, upper tiles block lower tiles
-
-### 🚀 Quick Start
-
-#### Prerequisites
-
-- Node.js 16+
-- npm or yarn
-
-#### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/deep-sea-relic-hunter.git
-
-# Navigate to project directory
-cd deep-sea-relic-hunter
-
-# Install dependencies
-npm install
-```
-
-#### Configuration
-
-Create a `.env` file and add your Gemini API Key (optional, for AI commentary):
-
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
-#### Run
-
-```bash
-# Development mode
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-Visit `http://localhost:3000` to start playing!
-
-### 🛠️ Tech Stack
-
-- **Frontend Framework**: React 19.2.3
-- **Language**: TypeScript 5.8.2
-- **Build Tool**: Vite 6.2.0
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **AI Integration**: Google Gemini AI (@google/genai)
-
-### 📁 Project Structure
-
-```
-deep-sea-relic-hunter/
-├── components/          # React components
-│   ├── Dock.tsx        # Bottom dock component
-│   ├── GameBoard.tsx   # Game board component
-│   ├── GameHeader.tsx  # Game header component
-│   ├── GameOverModal.tsx # Game over modal
-│   └── Tile.tsx        # Tile component
-├── services/           # Service layer
-│   └── geminiService.ts # Gemini AI service
-├── App.tsx             # Main app component
-├── constants.tsx       # Game constants
-├── types.ts            # TypeScript type definitions
-├── index.tsx           # App entry point
-├── index.html          # HTML template
-├── vite.config.ts      # Vite configuration
-└── package.json        # Project dependencies
-```
-
-### 🎮 Game Mechanics
-
-#### Layer Detection System
-
-The game uses strict spatial overlap detection:
-- Tile size: 50px width, 60px height
-- Detection rule: If any tile in upper layers overlaps with the current tile (dx < 50 and dy < 60), the current tile is considered "blocked" and not clickable
-
-#### Special Layouts
-
-- **Central Tower**: 10-layer complex stack with 4-5 tiles per layer
-- **Random Scatter Points**: 10 scattered clusters, 3 layers each
-- **Left/Right Side Piles**: 15 tiles each in long strips, only topmost clickable
-
-### 🤖 AI Assistant
-
-Integrated with Google Gemini AI to provide:
-- Cold reminders at game start
-- Humorous taunts on failure
-- Mysterious hints when stuck
-
-The AI assistant "Deep Blue" uses diving terminology and data analysis tone to add fun to the game.
-
-### 🎨 Visual Design
-
-- **Deep Sea Gradient Background**: Radial gradient from deep blue to black
-- **Scanline Animation**: Simulates sonar scanning effect
-- **Match Flash Animation**: Visual feedback when tiles are eliminated
-- **Smooth Transitions**: Linear transitions to avoid jumping feel
-
-### 📝 Development Notes
-
-#### Adding New Tile Types
-
-Add new tile definitions in `constants.tsx`:
-
-```typescript
-{ 
-  id: 'new-item', 
-  icon: '🎯', 
-  name: 'New Relic', 
-  color: 'bg-purple-50' 
-}
-```
-
-#### Adjusting Difficulty
-
-Modify the `initGame` function in `App.tsx`:
-- `totalTripletsCount`: Controls total number of tiles
-- Layout logic: Adjust central tower, scatter points, and side pile quantities
-
-### 🤝 Contributing
-
-Issues and Pull Requests are welcome!
-
-### 📄 License
-
-This project is licensed under the MIT License.
-
-### 🙏 Acknowledgments
-
-- Game inspired by "Sheep a Sheep"
-- Powered by Google Gemini AI for intelligent commentary
-- Icons provided by Lucide React
+- 使用 Netlify 进行部署
 
 ---
 
 <div align="center">
 
-**Made with ❤️ and 🌊**
+Made with ❤️ by Deep Sea Explorer
 
-</div>
