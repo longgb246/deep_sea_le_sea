@@ -7,7 +7,8 @@ import GameBoard from './components/GameBoard';
 import Dock from './components/Dock';
 import GameOverModal from './components/GameOverModal';
 import HelpSidebar from './components/HelpSidebar';
-import { getSheepCommentary } from './services/geminiService';
+import TypewriterText from './components/TypewriterText';
+import { getAmbientCommentary } from './services/geminiService';
 import { 
   ArrowLeft, Zap, Search, 
   Orbit, Radio, Waves, ShieldAlert
@@ -17,13 +18,22 @@ const App: React.FC = () => {
   const [tiles, setTiles] = useState<TileInstance[]>([]);
   const [dock, setDock] = useState<TileInstance[]>([]);
   const [status, setStatus] = useState<GameStatus>(GameStatus.IDLE);
-  const [commentary, setCommentary] = useState<string>("系统就绪，等待下潜指令。");
   const [loading, setLoading] = useState(false);
   const [level, setLevel] = useState(1);
   const [showHelp, setShowHelp] = useState(false);
   const [matchingIds, setMatchingIds] = useState<string[]>([]);
+  const [ambientTexts, setAmbientTexts] = useState<string[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // 初始化环境话术列表
+  useEffect(() => {
+    const texts: string[] = [];
+    for (let i = 0; i < 50; i++) {
+      texts.push(getAmbientCommentary());
+    }
+    setAmbientTexts(texts);
+  }, []);
 
   /**
    * 严格的层级判定逻辑：
@@ -68,7 +78,6 @@ const App: React.FC = () => {
     setLevel(selectedLevel);
     setDock([]);
     setMatchingIds([]);
-    setCommentary("声呐扫描中，正在锁定海床遗迹...");
 
     const newTiles: TileInstance[] = [];
     const activeTileTypes = selectedLevel === 1 ? TILE_DEFS.slice(0, 6) : TILE_DEFS;
@@ -204,7 +213,6 @@ const App: React.FC = () => {
     }
 
     setTiles(updateClickable(newTiles));
-    getSheepCommentary('start').then(setCommentary);
     setLoading(false);
   }, [updateClickable]);
 
@@ -256,7 +264,6 @@ const App: React.FC = () => {
         } else {
           if (nextDock.length >= DOCK_SIZE) {
             setStatus(GameStatus.LOST);
-            getSheepCommentary('lost').then(setCommentary);
           }
         }
         return nextDock;
@@ -284,7 +291,6 @@ const App: React.FC = () => {
 
     const newTiles = boardTiles.map((tile, idx) => ({ ...tile, ...shuffledCoords[idx] }));
     setTiles(updateClickable([...newTiles, ...fixedTiles]));
-    setCommentary("遗迹空间序列重组完成，干扰已排除。");
   };
 
   const resetGame = useCallback(() => {
@@ -308,15 +314,23 @@ const App: React.FC = () => {
       <GameHeader />
 
       {status === GameStatus.PLAYING && (
-        <div className="fixed top-20 right-4 w-32 sm:w-40 z-[90] pointer-events-none">
-          <div className="bg-slate-900/80 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-3 shadow-xl pointer-events-auto">
-             <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
-                <span className="text-[8px] font-black text-cyan-500 uppercase tracking-widest">深蓝助手 v2.5</span>
+        <div className="fixed top-20 right-4 w-48 sm:w-64 z-[90] pointer-events-none">
+          <div className="bg-slate-900/90 backdrop-blur-md border-2 border-cyan-500/40 rounded-2xl p-4 shadow-2xl pointer-events-auto">
+             <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">深蓝助手 v2.5</span>
              </div>
-             <p className="text-cyan-100 text-[10px] leading-tight italic opacity-90">
-                "{commentary}"
-             </p>
+             <div className="text-cyan-100 text-sm leading-relaxed font-medium min-h-[60px]">
+                {ambientTexts.length > 0 && (
+                  <TypewriterText 
+                    texts={ambientTexts}
+                    typingSpeed={50}
+                    deletingSpeed={30}
+                    pauseDuration={30000}
+                    className="block"
+                  />
+                )}
+             </div>
           </div>
         </div>
       )}
@@ -406,7 +420,7 @@ const App: React.FC = () => {
               <span className="text-[10px] font-black text-indigo-600 tracking-tighter uppercase">重排</span>
             </button>
 
-            <button onClick={async () => setCommentary(await getSheepCommentary('stuck'))} className="flex flex-col items-center gap-2 group">
+            <button onClick={() => {}} className="flex flex-col items-center gap-2 group">
               <div className="w-16 h-16 bg-slate-900/80 rounded-3xl border-2 border-teal-500/30 group-hover:border-teal-400 transition-all flex items-center justify-center relative active:scale-90 shadow-xl">
                 <Search className="w-7 h-7 text-teal-400" />
               </div>
