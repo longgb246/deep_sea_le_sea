@@ -8,7 +8,7 @@ import Dock from './components/Dock';
 import GameOverModal from './components/GameOverModal';
 import HelpSidebar from './components/HelpSidebar';
 import TypewriterText from './components/TypewriterText';
-import { getAmbientCommentary } from './services/geminiService';
+import { getAmbientCommentary } from './services/commentaryService';
 import { 
   ArrowLeft, Zap, Search, 
   Orbit, Radio, Waves, ShieldAlert
@@ -122,21 +122,23 @@ const App: React.FC = () => {
         }
       }
     } else {
-      // 第二关：复杂的“羊了个羊”式布局
+      // 第二关：复杂的"羊了个羊"式布局，多种形状组合
       
-      // 1. 中央塔（高层堆叠）
-      for (let layer = 0; layer < 10; layer++) {
-        const size = layer < 5 ? 5 : 4;
-        const offset = layer % 2 === 0 ? 0 : 25;
+      // 1. 中央金字塔（三角形堆叠）
+      for (let layer = 0; layer < 6; layer++) {
+        const size = 6 - layer; // 从6递减到1，形成金字塔
+        const layerOffset = layer * 25; // 每层向中心收缩
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
             if (poolIdx < pool.length) {
               newTiles.push({
                 ...pool[poolIdx++],
-                instanceId: `tower-${layer}-${r}-${c}`,
-                layer: layer, row: r, col: c,
-                x: centerX - (size * 25) + (c * 50) + offset + jitter(4),
-                y: centerY - (size * 30) + (r * 60) + offset + jitter(4),
+                instanceId: `pyramid-${layer}-${r}-${c}`,
+                layer: layer,
+                row: r,
+                col: c,
+                x: centerX - (size * 25) + (c * 50) + layerOffset + jitter(3),
+                y: centerY - (size * 30) + (r * 60) + layerOffset + jitter(3),
                 isClickable: false,
                 status: 'board',
                 pileType: 'main'
@@ -146,18 +148,21 @@ const App: React.FC = () => {
         }
       }
 
-      // 2. 随机散落点
-      for (let cluster = 0; cluster < 10; cluster++) {
-        const cx = 50 + Math.random() * 260;
-        const cy = 50 + Math.random() * 260;
-        for (let d = 0; d < 3; d++) {
+      // 2. 左上角菱形堆
+      const diamondPositions = [
+        [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]
+      ];
+      for (let layer = 0; layer < 3; layer++) {
+        for (const [r, c] of diamondPositions) {
           if (poolIdx < pool.length) {
             newTiles.push({
               ...pool[poolIdx++],
-              instanceId: `scatter-${cluster}-${d}`,
-              layer: d, row: 0, col: 0,
-              x: cx + jitter(10),
-              y: cy + jitter(10),
+              instanceId: `diamond-left-${layer}-${r}-${c}`,
+              layer: layer,
+              row: r,
+              col: c,
+              x: 50 + (c * 50) + jitter(4),
+              y: 60 + (r * 60) + jitter(4),
               isClickable: false,
               status: 'board',
               pileType: 'main'
@@ -166,15 +171,108 @@ const App: React.FC = () => {
         }
       }
 
-      // 3. 左右两侧长条堆（羊了个羊特色）
-      const sidePileSize = 15;
+      // 3. 右上角十字形堆
+      const crossPositions = [
+        [0, 1], [1, 0], [1, 1], [1, 2], [2, 1]
+      ];
+      for (let layer = 0; layer < 3; layer++) {
+        for (const [r, c] of crossPositions) {
+          if (poolIdx < pool.length) {
+            newTiles.push({
+              ...pool[poolIdx++],
+              instanceId: `cross-right-${layer}-${r}-${c}`,
+              layer: layer,
+              row: r,
+              col: c,
+              x: 260 + (c * 50) + jitter(4),
+              y: 60 + (r * 60) + jitter(4),
+              isClickable: false,
+              status: 'board',
+              pileType: 'main'
+            });
+          }
+        }
+      }
+
+      // 4. 左下角L形堆
+      const lShapePositions = [
+        [0, 0], [1, 0], [2, 0], [2, 1], [2, 2]
+      ];
+      for (let layer = 0; layer < 2; layer++) {
+        for (const [r, c] of lShapePositions) {
+          if (poolIdx < pool.length) {
+            newTiles.push({
+              ...pool[poolIdx++],
+              instanceId: `lshape-left-${layer}-${r}-${c}`,
+              layer: layer,
+              row: r,
+              col: c,
+              x: 40 + (c * 50) + jitter(4),
+              y: 280 + (r * 60) + jitter(4),
+              isClickable: false,
+              status: 'board',
+              pileType: 'main'
+            });
+          }
+        }
+      }
+
+      // 5. 右下角T形堆
+      const tShapePositions = [
+        [0, 0], [0, 1], [0, 2], [1, 1], [2, 1]
+      ];
+      for (let layer = 0; layer < 2; layer++) {
+        for (const [r, c] of tShapePositions) {
+          if (poolIdx < pool.length) {
+            newTiles.push({
+              ...pool[poolIdx++],
+              instanceId: `tshape-right-${layer}-${r}-${c}`,
+              layer: layer,
+              row: r,
+              col: c,
+              x: 260 + (c * 50) + jitter(4),
+              y: 280 + (r * 60) + jitter(4),
+              isClickable: false,
+              status: 'board',
+              pileType: 'main'
+            });
+          }
+        }
+      }
+
+      // 6. 随机散落点（增加难度）
+      for (let cluster = 0; cluster < 8; cluster++) {
+        const cx = 60 + Math.random() * 240;
+        const cy = 60 + Math.random() * 300;
+        for (let d = 0; d < 2; d++) {
+          if (poolIdx < pool.length) {
+            newTiles.push({
+              ...pool[poolIdx++],
+              instanceId: `scatter-${cluster}-${d}`,
+              layer: d,
+              row: 0,
+              col: 0,
+              x: cx + jitter(8),
+              y: cy + jitter(8),
+              isClickable: false,
+              status: 'board',
+              pileType: 'main'
+            });
+          }
+        }
+      }
+
+      // 7. 左右两侧长条堆（羊了个羊特色）
+      const sidePileSize = 18; // 增加到18个
       for (let i = 0; i < sidePileSize; i++) {
         if (poolIdx < pool.length) {
           newTiles.push({
             ...pool[poolIdx++],
             instanceId: `left-${i}`,
-            layer: 0, row: 0, col: 0,
-            x: 10 + (i * 2),
+            layer: 0,
+            row: 0,
+            col: 0,
+            x: 8 + (i * 2),
             y: 440,
             isClickable: false,
             status: 'board',
@@ -186,8 +284,10 @@ const App: React.FC = () => {
           newTiles.push({
             ...pool[poolIdx++],
             instanceId: `right-${i}`,
-            layer: 0, row: 0, col: 0,
-            x: 350 - (i * 2),
+            layer: 0,
+            row: 0,
+            col: 0,
+            x: 352 - (i * 2),
             y: 440,
             isClickable: false,
             status: 'board',
