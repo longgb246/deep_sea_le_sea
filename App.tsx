@@ -36,16 +36,20 @@ const App: React.FC = () => {
   }, []);
 
   /**
-   * 严格的层级判定逻辑：
-   * 瓦片尺寸：宽50px，高60px。
-   * 判定规则：如果上方图层（layer更大）有任何瓦片与当前瓦片在空间上存在重叠（dx < 50 且 dy < 60），
-   * 则当前瓦片被判定为“被压住”，不可点击。
+   * 俯视视角的层级判定逻辑（重新设计）：
+   * 核心思想：从正上方往下看（俯视），只有视觉上完全可见的瓦片才能点击
+   * 
+   * 判定规则：
+   * 1. 瓦片尺寸：宽50px，高60px
+   * 2. 从上往下看，如果一个瓦片被任何更高层的瓦片遮挡，就不能点击
+   * 3. 遮挡判定：上层瓦片的投影与当前瓦片有重叠
+   * 4. 重叠计算：两个矩形在 XY 平面上的重叠检测
    */
   const updateClickable = useCallback((currentTiles: TileInstance[]) => {
     return currentTiles.map(tile => {
       if (tile.status !== 'board') return tile;
 
-      // 侧边槽位逻辑：只有最上层的索引可见且可点
+      // 侧边槽位逻辑：只有最上层的索引可见且可点击
       if (tile.pileType === 'left-side' || tile.pileType === 'right-side') {
         const higherInPile = currentTiles.some(other => 
           other.status === 'board' && 
@@ -55,20 +59,44 @@ const App: React.FC = () => {
         return { ...tile, isClickable: !higherInPile };
       }
       
-      // 主棋盘空间重叠检查
-      const isBlocked = currentTiles.some(other => {
-        // 只关心还在棋盘上且层级更高的瓦片
-        if (other.status !== 'board' || other.layer <= tile.layer || other.instanceId === tile.instanceId) return false;
+      // 主棋盘：俯视遮挡检测
+      // 检查是否有更高层的瓦片在视觉上遮挡了当前瓦片
+      const isBlockedFromAbove = currentTiles.some(other => {
+        // 跳过自己
+        if (other.instanceId === tile.instanceId) return false;
         
-        // 瓦片实际尺寸是 50x60
-        const dx = Math.abs(other.x - tile.x);
-        const dy = Math.abs(other.y - tile.y);
+        // 只关心还在棋盘上的瓦片
+        if (other.status !== 'board') return false;
         
-        // 只要有任何像素重叠，就视为被压住
-        return dx < 50 && dy < 60;
+        // 只检查严格更高层的瓦片（layer 值更大）
+        // 同层瓦片不互相遮挡
+        if (other.layer <= tile.layer) return false;
+        
+        // 矩形重叠检测（俯视投影）
+        // 瓦片是一个矩形：中心点 (x, y)，尺寸 50x60
+        // 计算两个矩形的边界
+        const tile1Left = tile.x - 25;
+        const tile1Right = tile.x + 25;
+        const tile1Top = tile.y - 30;
+        const tile1Bottom = tile.y + 30;
+        
+        const tile2Left = other.x - 25;
+        const tile2Right = other.x + 25;
+        const tile2Top = other.y - 30;
+        const tile2Bottom = other.y + 30;
+        
+        // 检查两个矩形是否有重叠
+        // 如果有任何一个方向完全分离，则没有重叠
+        const noOverlapX = tile1Right <= tile2Left || tile2Right <= tile1Left;
+        const noOverlapY = tile1Bottom <= tile2Top || tile2Bottom <= tile1Top;
+        
+        // 如果 X 和 Y 方向都有重叠，则视为被遮挡
+        const hasOverlap = !noOverlapX && !noOverlapY;
+        
+        return hasOverlap;
       });
 
-      return { ...tile, isClickable: !isBlocked };
+      return { ...tile, isClickable: !isBlockedFromAbove };
     });
   }, []);
 

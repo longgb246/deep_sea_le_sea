@@ -17,9 +17,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
 }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTyping, setIsTyping] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('typing');
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -27,48 +25,50 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
 
     const currentText = texts[currentIndex];
 
-    const handleTyping = () => {
-      if (isTyping && !isDeleting && !isPaused) {
-        // 打字阶段
-        if (displayText.length < currentText.length) {
-          setDisplayText(currentText.slice(0, displayText.length + 1));
-          timeoutRef.current = setTimeout(handleTyping, typingSpeed);
-        } else {
-          // 打字完成，进入暂停阶段
-          setIsTyping(false);
-          setIsPaused(true);
-          timeoutRef.current = setTimeout(() => {
-            setIsPaused(false);
-            setIsDeleting(true);
-          }, pauseDuration);
-        }
-      } else if (isDeleting && !isPaused) {
-        // 删除阶段
-        if (displayText.length > 0) {
-          setDisplayText(displayText.slice(0, -1));
-          timeoutRef.current = setTimeout(handleTyping, deletingSpeed);
-        } else {
-          // 删除完成，切换到下一条
-          setIsDeleting(false);
-          setIsTyping(true);
-          setCurrentIndex((prevIndex) => (prevIndex + 1) % texts.length);
-        }
-      }
-    };
+    // 清除之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    timeoutRef.current = setTimeout(handleTyping, isTyping ? typingSpeed : deletingSpeed);
+    if (phase === 'typing') {
+      // 打字阶段
+      if (displayText.length < currentText.length) {
+        timeoutRef.current = setTimeout(() => {
+          setDisplayText(currentText.slice(0, displayText.length + 1));
+        }, typingSpeed);
+      } else {
+        // 打字完成，进入暂停阶段
+        setPhase('pausing');
+      }
+    } else if (phase === 'pausing') {
+      // 暂停阶段（显示完整文本30秒）
+      timeoutRef.current = setTimeout(() => {
+        setPhase('deleting');
+      }, pauseDuration);
+    } else if (phase === 'deleting') {
+      // 删除阶段
+      if (displayText.length > 0) {
+        timeoutRef.current = setTimeout(() => {
+          setDisplayText(displayText.slice(0, -1));
+        }, deletingSpeed);
+      } else {
+        // 删除完成，切换到下一条文本
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % texts.length);
+        setPhase('typing');
+      }
+    }
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [displayText, currentIndex, isTyping, isDeleting, isPaused, texts, typingSpeed, deletingSpeed, pauseDuration]);
+  }, [displayText, currentIndex, phase, texts, typingSpeed, deletingSpeed, pauseDuration]);
 
   return (
     <span className={className}>
       {displayText}
-      <span className="animate-pulse">|</span>
+      <span className="animate-pulse ml-0.5">|</span>
     </span>
   );
 };
