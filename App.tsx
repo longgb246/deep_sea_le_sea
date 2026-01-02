@@ -6,11 +6,11 @@ import GameHeader from './components/GameHeader';
 import GameBoard from './components/GameBoard';
 import Dock from './components/Dock';
 import GameOverModal from './components/GameOverModal';
+import HelpSidebar from './components/HelpSidebar';
 import { getSheepCommentary } from './services/geminiService';
 import { 
-  ArrowLeft, X, Zap, Search, 
-  Orbit, Radio, Waves, ShieldAlert, 
-  Terminal
+  ArrowLeft, Zap, Search, 
+  Orbit, Radio, Waves, ShieldAlert
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -20,7 +20,7 @@ const App: React.FC = () => {
   const [commentary, setCommentary] = useState<string>("系统就绪，等待下潜指令。");
   const [loading, setLoading] = useState(false);
   const [level, setLevel] = useState(1);
-  const [showInfo, setShowInfo] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [matchingIds, setMatchingIds] = useState<string[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -296,7 +296,7 @@ const App: React.FC = () => {
     setDock([]);
     setMatchingIds([]);
     setStatus(GameStatus.IDLE);
-    setShowInfo(false);
+    setShowHelp(false);
   };
 
   return (
@@ -322,7 +322,7 @@ const App: React.FC = () => {
       )}
 
       {status === GameStatus.PLAYING && (
-        <div className="fixed top-4 left-0 right-0 px-4 flex justify-between items-center z-[100]">
+        <div className="fixed top-4 left-4 z-[100]">
           <button 
             onClick={returnToMenu}
             className="p-3 bg-slate-900/90 backdrop-blur-xl border-2 border-cyan-500/40 rounded-2xl text-cyan-400 hover:bg-cyan-900 shadow-xl active:scale-90 flex items-center gap-2"
@@ -330,14 +330,11 @@ const App: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">终止任务</span>
           </button>
-
-          <button 
-            onClick={() => setShowInfo(true)}
-            className="p-3 bg-slate-900/90 backdrop-blur-xl border-2 border-cyan-500/40 rounded-2xl text-cyan-400 hover:bg-cyan-900 shadow-xl active:scale-90"
-          >
-            <Terminal className="w-5 h-5" />
-          </button>
         </div>
+      )}
+
+      {status === GameStatus.PLAYING && (
+        <HelpSidebar isOpen={showHelp} onToggle={() => setShowHelp(!showHelp)} />
       )}
 
       <main className="relative flex-1 w-full max-w-md flex items-center justify-center z-10">
@@ -419,30 +416,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {showInfo && (
-        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-md flex items-center justify-center px-4" onClick={() => setShowInfo(false)}>
-          <div className="w-full max-w-sm bg-slate-900 border-2 border-cyan-500/40 p-8 rounded-[2.5rem] flex flex-col gap-6 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <h3 className="text-cyan-300 font-black text-xl tracking-tighter uppercase">任务简报</h3>
-              <button onClick={() => setShowInfo(false)} className="p-2 bg-slate-800 rounded-xl text-slate-400">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                收集三个相同的遗迹组件即可回收。请注意，被上方组件遮挡的遗迹由于深度过大，声呐无法锁定，必须先清理上层。
-              </p>
-              <div className="p-4 bg-slate-950/50 rounded-2xl border border-cyan-500/10">
-                <div className="flex items-center gap-3 mb-2">
-                   <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
-                   <span className="text-[10px] font-black text-cyan-500 uppercase">层级判定</span>
-                </div>
-                <p className="text-slate-500 text-[10px]">只要有任何部分被上层遮挡，瓦片都会变暗并锁定。请优先清理高层堆叠。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <GameOverModal status={status} onRestart={resetGame} onMenu={returnToMenu} />
 
